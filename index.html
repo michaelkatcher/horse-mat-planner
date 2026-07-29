@@ -2,36 +2,2021 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Horse Mat Planner</title>
-
   <style>
-    body {
-      margin: 0;
-      padding: 40px;
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      color: #222;
+    :root {
+      --bg: #eef2f7;
+      --panel: #ffffff;
+      --panel-alt: #f8fafc;
+      --border: #d7dee8;
+      --border-strong: #aeb8c6;
+      --text: #172033;
+      --muted: #667085;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --danger: #c62828;
+      --danger-bg: #fff1f1;
+      --success: #177245;
+      --success-bg: #edf9f2;
+      --warning: #9a6700;
+      --warning-bg: #fff8e6;
+      --shadow: 0 8px 24px rgba(16, 24, 40, 0.08);
+      --radius: 12px;
     }
 
-    main {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 40px;
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      height: 100%;
+    }
+
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      min-height: 68px;
+      padding: 12px 20px;
+      background: #0f172a;
+      color: white;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .title-wrap h1 {
+      margin: 0;
+      font-size: 21px;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+    }
+
+    .title-wrap p {
+      margin: 4px 0 0;
+      color: #cbd5e1;
+      font-size: 12px;
+    }
+
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 220px;
+      justify-content: flex-end;
+      color: #dbeafe;
+      font-size: 12px;
+    }
+
+    .save-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4ade80;
+      box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.15);
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 310px minmax(420px, 1fr) 360px;
+      min-height: 0;
+    }
+
+    .sidebar,
+    .inventory-panel {
+      min-height: 0;
+      overflow-y: auto;
+      padding: 14px;
+      background: var(--panel-alt);
+    }
+
+    .sidebar {
+      border-right: 1px solid var(--border);
+    }
+
+    .inventory-panel {
+      border-left: 1px solid var(--border);
+    }
+
+    .center-panel {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-width: 0;
+      min-height: 0;
+      padding: 14px;
+      gap: 10px;
+    }
+
+    .card {
+      margin-bottom: 12px;
+      padding: 14px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 2px 8px rgba(16, 24, 40, 0.035);
+    }
+
+    .card:last-child {
+      margin-bottom: 0;
+    }
+
+    .card h2,
+    .card h3 {
+      margin: 0 0 12px;
+      letter-spacing: -0.01em;
+    }
+
+    .card h2 {
+      font-size: 15px;
+    }
+
+    .card h3 {
+      font-size: 14px;
+    }
+
+    .helper {
+      margin: -4px 0 12px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .field {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      color: #344054;
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    input[type="number"],
+    input[type="text"],
+    select {
+      width: 100%;
+      min-height: 36px;
+      padding: 7px 9px;
+      color: var(--text);
       background: white;
-      border: 1px solid #ddd;
+      border: 1px solid var(--border-strong);
       border-radius: 8px;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    input[disabled] {
+      color: #667085;
+      background: #f2f4f7;
+    }
+
+    .input-suffix {
+      position: relative;
+    }
+
+    .input-suffix input {
+      padding-right: 28px;
+    }
+
+    .input-suffix::after {
+      content: '″';
+      position: absolute;
+      right: 10px;
+      bottom: 8px;
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .btn {
+      min-height: 34px;
+      padding: 7px 11px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+      transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn.primary {
+      color: white;
+      background: var(--accent);
+    }
+
+    .btn.primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn.secondary {
+      color: #344054;
+      background: white;
+      border-color: var(--border-strong);
+    }
+
+    .btn.secondary:hover {
+      background: #f8fafc;
+      border-color: #8b98aa;
+    }
+
+    .btn.danger {
+      color: var(--danger);
+      background: white;
+      border-color: #efb4b4;
+    }
+
+    .btn.danger:hover {
+      background: var(--danger-bg);
+    }
+
+    .btn.ghost {
+      color: var(--accent);
+      background: transparent;
+      border-color: transparent;
+    }
+
+    .btn.small {
+      min-height: 29px;
+      padding: 6px 8px;
+      font-size: 11px;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 10px 0;
+      color: #344054;
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .toggle-row input {
+      width: 17px;
+      height: 17px;
+    }
+
+    .zoom-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+    }
+
+    .zoom-value {
+      min-width: 44px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: right;
+    }
+
+    .status-banner {
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: white;
+      color: #344054;
+      font-size: 12px;
+    }
+
+    .status-banner.ok {
+      border-color: #b7dfc8;
+      background: var(--success-bg);
+      color: var(--success);
+    }
+
+    .status-banner.warn {
+      border-color: #ecd28d;
+      background: var(--warning-bg);
+      color: var(--warning);
+    }
+
+    .status-banner.error {
+      border-color: #efb4b4;
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    .status-icon {
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .canvas-viewport {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(45deg, #f3f6fa 25%, transparent 25%),
+        linear-gradient(-45deg, #f3f6fa 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #f3f6fa 75%),
+        linear-gradient(-45deg, transparent 75%, #f3f6fa 75%),
+        #e8edf3;
+      background-size: 24px 24px;
+      background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .canvas-shell {
+      min-width: 100%;
+      min-height: 100%;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
+      padding: 24px;
+    }
+
+    #roomSvg {
+      display: block;
+      flex: 0 0 auto;
+      background: white;
+      box-shadow: var(--shadow);
+    }
+
+    .mat-group {
+      cursor: grab;
+    }
+
+    .mat-group:active {
+      cursor: grabbing;
+    }
+
+    .canvas-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .keyboard-hints {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    kbd {
+      display: inline-block;
+      min-width: 22px;
+      padding: 2px 5px;
+      border: 1px solid #b8c2cf;
+      border-bottom-width: 2px;
+      border-radius: 5px;
+      background: white;
+      color: #344054;
+      font: 600 10px ui-monospace, SFMono-Regular, Menlo, monospace;
+      text-align: center;
+    }
+
+    .inventory-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .inventory-header h2 {
+      margin: 0;
+      font-size: 15px;
+    }
+
+    .count-badge {
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #e8eef8;
+      color: #344054;
+      font-size: 11px;
+      font-weight: 750;
+    }
+
+    .mat-list {
+      display: grid;
+      gap: 9px;
+    }
+
+    .empty-state {
+      padding: 20px 12px;
+      border: 1px dashed var(--border-strong);
+      border-radius: 10px;
+      color: var(--muted);
+      background: white;
+      text-align: center;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .mat-card {
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: white;
+    }
+
+    .mat-card.selected {
+      border-color: #7aa6f8;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+    }
+
+    .mat-card.invalid {
+      border-color: #e8a6a6;
+      background: #fffafa;
+    }
+
+    .mat-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .mat-title {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .mat-meta {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .status-pill {
+      flex: 0 0 auto;
+      max-width: 120px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .status-pill.ok {
+      color: var(--success);
+      background: var(--success-bg);
+    }
+
+    .status-pill.warn {
+      color: var(--warning);
+      background: var(--warning-bg);
+    }
+
+    .status-pill.error {
+      color: var(--danger);
+      background: var(--danger-bg);
+    }
+
+    .mat-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 9px;
+    }
+
+    .form-section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .form-section-title h2 {
+      margin: 0;
+      font-size: 15px;
+    }
+
+    .editing-badge {
+      display: none;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: #e0ecff;
+      color: #1d4ed8;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .editing-badge.visible {
+      display: inline-block;
+    }
+
+    .notch-fields {
+      display: none;
+      grid-column: 1 / -1;
+      padding-top: 2px;
+    }
+
+    .notch-fields.visible {
+      display: block;
+    }
+
+    .notch-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .legend-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      color: #475467;
+      font-size: 11px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .legend-swatch {
+      width: 18px;
+      height: 12px;
+      border-radius: 3px;
+      border: 2px solid #334155;
+      background: #dbeafe;
+    }
+
+    .legend-swatch.invalid {
+      border-color: #b91c1c;
+      background: #fecaca;
+    }
+
+    .legend-swatch.selected {
+      border-color: #2563eb;
+      background: #bfdbfe;
+    }
+
+    .subtle-divider {
+      height: 1px;
+      margin: 12px 0;
+      background: var(--border);
+    }
+
+    .visually-hidden {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      padding: 0 !important;
+      margin: -1px !important;
+      overflow: hidden !important;
+      clip: rect(0, 0, 0, 0) !important;
+      white-space: nowrap !important;
+      border: 0 !important;
+    }
+
+    @media (max-width: 1150px) {
+      .workspace {
+        grid-template-columns: 280px minmax(380px, 1fr) 320px;
+      }
     }
   </style>
 </head>
-
 <body>
-  <main>
-    <h1>Horse Mat Planner</h1>
-    <p>The application has been successfully published.</p>
-  </main>
+  <div class="app">
+    <header class="app-header">
+      <div class="title-wrap">
+        <h1>Horse Mat Planner</h1>
+        <p>Quarter-inch layout planning · Right-click a mat to rotate it 90° clockwise</p>
+      </div>
+      <div class="header-status" aria-live="polite">
+        <span class="save-dot"></span>
+        <span id="saveStatus">Saved locally</span>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="sidebar">
+        <section class="card">
+          <h2>Room & pole</h2>
+          <p class="helper">Room width runs left-to-right. Room length runs top-to-bottom. All entries snap to ¼ inch.</p>
+
+          <div class="field-grid">
+            <div class="field">
+              <label for="roomWidth">Room width</label>
+              <div class="input-suffix"><input id="roomWidth" type="number" min="0.25" step="0.25"></div>
+            </div>
+            <div class="field">
+              <label for="roomLength">Room length</label>
+              <div class="input-suffix"><input id="roomLength" type="number" min="0.25" step="0.25"></div>
+            </div>
+            <div class="field">
+              <label for="poleLeft">Pole: nearest edge from left wall</label>
+              <div class="input-suffix"><input id="poleLeft" type="number" min="0" step="0.25"></div>
+            </div>
+            <div class="field">
+              <label for="poleTop">Pole: nearest edge from top wall</label>
+              <div class="input-suffix"><input id="poleTop" type="number" min="0" step="0.25"></div>
+            </div>
+            <div class="field full">
+              <label for="poleDiameter">Pole diameter</label>
+              <div class="input-suffix"><input id="poleDiameter" type="number" value="4" disabled></div>
+            </div>
+          </div>
+
+          <div class="button-row">
+            <button class="btn primary" id="applyRoomBtn" type="button">Apply settings</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>View</h2>
+          <label class="toggle-row" for="showGrid">
+            <span>Show ¼-inch grid</span>
+            <input id="showGrid" type="checkbox" checked>
+          </label>
+
+          <div class="zoom-row">
+            <input id="zoomSlider" type="range" min="0.5" max="3" step="0.1" value="1" aria-label="Zoom">
+            <span class="zoom-value" id="zoomValue">100%</span>
+          </div>
+
+          <div class="button-row">
+            <button class="btn secondary" id="fitBtn" type="button">Fit room</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Save & share</h2>
+          <p class="helper">Layouts autosave in this browser. Export a JSON file to move or share the layout.</p>
+          <div class="button-row">
+            <button class="btn secondary" id="saveNowBtn" type="button">Save now</button>
+            <button class="btn secondary" id="exportBtn" type="button">Export layout</button>
+            <button class="btn secondary" id="importBtn" type="button">Import layout</button>
+            <input id="importFile" class="visually-hidden" type="file" accept="application/json,.json">
+          </div>
+          <div class="subtle-divider"></div>
+          <div class="button-row">
+            <button class="btn secondary" id="resetPlacementsBtn" type="button">Reset placements</button>
+            <button class="btn danger" id="clearProjectBtn" type="button">Clear project</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Legend</h2>
+          <ul class="legend-list">
+            <li class="legend-item"><span class="legend-swatch"></span><span>Valid placed mat</span></li>
+            <li class="legend-item"><span class="legend-swatch selected"></span><span>Selected mat</span></li>
+            <li class="legend-item"><span class="legend-swatch invalid"></span><span>Overlap, pole collision, or outside room</span></li>
+          </ul>
+        </section>
+      </aside>
+
+      <section class="center-panel">
+        <div class="status-banner" id="statusBanner" aria-live="polite">
+          <span class="status-icon">ℹ</span>
+          <span id="statusText">Add mats from the panel on the right.</span>
+        </div>
+
+        <div class="canvas-viewport" id="canvasViewport">
+          <div class="canvas-shell" id="canvasShell">
+            <svg id="roomSvg" role="img" aria-label="Room layout canvas"></svg>
+          </div>
+        </div>
+
+        <div class="canvas-footer">
+          <div class="keyboard-hints">
+            <span><kbd>Click</kbd> select</span>
+            <span><kbd>Drag</kbd> move</span>
+            <span><kbd>Right-click</kbd> rotate</span>
+            <span><kbd>↑↓←→</kbd> move ¼″</span>
+            <span><kbd>Shift</kbd> + arrows move 1″</span>
+            <span><kbd>R</kbd> rotate</span>
+            <span><kbd>Del</kbd> unplace</span>
+          </div>
+          <div id="cursorPosition">—</div>
+        </div>
+      </section>
+
+      <aside class="inventory-panel">
+        <section class="card">
+          <div class="inventory-header">
+            <h2>Mat inventory</h2>
+            <span class="count-badge" id="matCount">0 mats</span>
+          </div>
+          <div class="mat-list" id="matList"></div>
+        </section>
+
+        <section class="card" id="matFormCard">
+          <div class="form-section-title">
+            <h2 id="matFormTitle">Add a mat</h2>
+            <span class="editing-badge" id="editingBadge">Editing</span>
+          </div>
+
+          <div class="field-grid">
+            <div class="field full">
+              <label for="matType">Shape</label>
+              <select id="matType">
+                <option value="rect">Rectangle</option>
+                <option value="notched">Rectangle with edge cutout</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="matWidth">Width</label>
+              <div class="input-suffix"><input id="matWidth" type="number" min="0.25" step="0.25" value="48"></div>
+            </div>
+            <div class="field">
+              <label for="matLength">Length</label>
+              <div class="input-suffix"><input id="matLength" type="number" min="0.25" step="0.25" value="72"></div>
+            </div>
+
+            <div class="notch-fields" id="notchFields">
+              <div class="notch-grid">
+                <div class="field full">
+                  <label for="notchSide">Cutout enters from</label>
+                  <select id="notchSide">
+                    <option value="top">Top edge</option>
+                    <option value="right">Right edge</option>
+                    <option value="bottom">Bottom edge</option>
+                    <option value="left">Left edge</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="notchSpan" id="notchSpanLabel">Opening along edge</label>
+                  <div class="input-suffix"><input id="notchSpan" type="number" min="0.25" step="0.25" value="4"></div>
+                </div>
+                <div class="field">
+                  <label for="notchDepth">Depth into mat</label>
+                  <div class="input-suffix"><input id="notchDepth" type="number" min="0.25" step="0.25" value="4"></div>
+                </div>
+                <div class="field full">
+                  <label for="notchOffset" id="notchOffsetLabel">Offset from left end of edge</label>
+                  <div class="input-suffix"><input id="notchOffset" type="number" min="0" step="0.25" value="0"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="button-row">
+            <button class="btn primary" id="saveMatBtn" type="button">Add mat</button>
+            <button class="btn secondary" id="cancelEditBtn" type="button" style="display:none">Cancel</button>
+          </div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    'use strict';
+
+    const STORAGE_KEY = 'horseMatPlanner.v1';
+    const APP_VERSION = 1;
+    const QUARTERS_PER_INCH = 4;
+    const POLE_DIAMETER_Q = 16; // 4 inches
+
+    const defaultState = () => ({
+      version: APP_VERSION,
+      room: {
+        widthQ: 480,  // 120 inches
+        lengthQ: 576 // 144 inches
+      },
+      pole: {
+        leftQ: 96, // 24 inches to nearest edge
+        topQ: 96,
+        diameterQ: POLE_DIAMETER_Q
+      },
+      mats: [],
+      nextMatId: 1
+    });
+
+    let state = loadState() || defaultState();
+    let selectedMatId = null;
+    let editingMatId = null;
+    let drag = null;
+    let view = {
+      zoom: 1,
+      showGrid: true,
+      fitPxPerInch: 5
+    };
+
+    const els = {
+      roomWidth: document.getElementById('roomWidth'),
+      roomLength: document.getElementById('roomLength'),
+      poleLeft: document.getElementById('poleLeft'),
+      poleTop: document.getElementById('poleTop'),
+      applyRoomBtn: document.getElementById('applyRoomBtn'),
+      showGrid: document.getElementById('showGrid'),
+      zoomSlider: document.getElementById('zoomSlider'),
+      zoomValue: document.getElementById('zoomValue'),
+      fitBtn: document.getElementById('fitBtn'),
+      saveNowBtn: document.getElementById('saveNowBtn'),
+      exportBtn: document.getElementById('exportBtn'),
+      importBtn: document.getElementById('importBtn'),
+      importFile: document.getElementById('importFile'),
+      resetPlacementsBtn: document.getElementById('resetPlacementsBtn'),
+      clearProjectBtn: document.getElementById('clearProjectBtn'),
+      saveStatus: document.getElementById('saveStatus'),
+      statusBanner: document.getElementById('statusBanner'),
+      statusText: document.getElementById('statusText'),
+      canvasViewport: document.getElementById('canvasViewport'),
+      roomSvg: document.getElementById('roomSvg'),
+      cursorPosition: document.getElementById('cursorPosition'),
+      matList: document.getElementById('matList'),
+      matCount: document.getElementById('matCount'),
+      matType: document.getElementById('matType'),
+      matWidth: document.getElementById('matWidth'),
+      matLength: document.getElementById('matLength'),
+      notchFields: document.getElementById('notchFields'),
+      notchSide: document.getElementById('notchSide'),
+      notchSpan: document.getElementById('notchSpan'),
+      notchDepth: document.getElementById('notchDepth'),
+      notchOffset: document.getElementById('notchOffset'),
+      notchOffsetLabel: document.getElementById('notchOffsetLabel'),
+      saveMatBtn: document.getElementById('saveMatBtn'),
+      cancelEditBtn: document.getElementById('cancelEditBtn'),
+      matFormTitle: document.getElementById('matFormTitle'),
+      editingBadge: document.getElementById('editingBadge'),
+      matFormCard: document.getElementById('matFormCard')
+    };
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function toQ(value) {
+      const number = Number(value);
+      if (!Number.isFinite(number)) return null;
+      return Math.round(number * QUARTERS_PER_INCH);
+    }
+
+    function fromQ(q) {
+      return q / QUARTERS_PER_INCH;
+    }
+
+    function qInput(q) {
+      return String(fromQ(q));
+    }
+
+    function formatQ(q, includeUnit = true) {
+      const sign = q < 0 ? '-' : '';
+      const absQ = Math.abs(Math.round(q));
+      const whole = Math.floor(absQ / 4);
+      const remainder = absQ % 4;
+      const fractions = ['', '¼', '½', '¾'];
+      const number = `${sign}${whole}${fractions[remainder]}`;
+      return includeUnit ? `${number}″` : number;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function getMat(id) {
+      return state.mats.find(mat => mat.id === Number(id)) || null;
+    }
+
+    function effectiveDimensions(mat, rotation = mat.rotation) {
+      return rotation % 180 === 0
+        ? { widthQ: mat.widthQ, lengthQ: mat.lengthQ }
+        : { widthQ: mat.lengthQ, lengthQ: mat.widthQ };
+    }
+
+    function transformPoint(x, y, rotation, widthQ, lengthQ) {
+      switch ((rotation + 360) % 360) {
+        case 90: return { x: lengthQ - y, y: x };
+        case 180: return { x: widthQ - x, y: lengthQ - y };
+        case 270: return { x: y, y: widthQ - x };
+        default: return { x, y };
+      }
+    }
+
+    function canonicalPolygon(mat) {
+      const W = mat.widthQ;
+      const H = mat.lengthQ;
+
+      if (mat.type !== 'notched') {
+        return [
+          { x: 0, y: 0 },
+          { x: W, y: 0 },
+          { x: W, y: H },
+          { x: 0, y: H }
+        ];
+      }
+
+      const { side, spanQ: s, depthQ: d, offsetQ: o } = mat.notch;
+
+      switch (side) {
+        case 'top':
+          return [
+            { x: 0, y: 0 },
+            { x: o, y: 0 },
+            { x: o, y: d },
+            { x: o + s, y: d },
+            { x: o + s, y: 0 },
+            { x: W, y: 0 },
+            { x: W, y: H },
+            { x: 0, y: H }
+          ];
+        case 'right':
+          return [
+            { x: 0, y: 0 },
+            { x: W, y: 0 },
+            { x: W, y: o },
+            { x: W - d, y: o },
+            { x: W - d, y: o + s },
+            { x: W, y: o + s },
+            { x: W, y: H },
+            { x: 0, y: H }
+          ];
+        case 'bottom':
+          return [
+            { x: 0, y: 0 },
+            { x: W, y: 0 },
+            { x: W, y: H },
+            { x: o + s, y: H },
+            { x: o + s, y: H - d },
+            { x: o, y: H - d },
+            { x: o, y: H },
+            { x: 0, y: H }
+          ];
+        case 'left':
+          return [
+            { x: 0, y: 0 },
+            { x: W, y: 0 },
+            { x: W, y: H },
+            { x: 0, y: H },
+            { x: 0, y: o + s },
+            { x: d, y: o + s },
+            { x: d, y: o },
+            { x: 0, y: o }
+          ];
+        default:
+          return [
+            { x: 0, y: 0 },
+            { x: W, y: 0 },
+            { x: W, y: H },
+            { x: 0, y: H }
+          ];
+      }
+    }
+
+    function rotatedPolygon(mat) {
+      return canonicalPolygon(mat).map(point =>
+        transformPoint(point.x, point.y, mat.rotation, mat.widthQ, mat.lengthQ)
+      );
+    }
+
+    function canonicalOccupiedRects(mat) {
+      const W = mat.widthQ;
+      const H = mat.lengthQ;
+
+      if (mat.type !== 'notched') {
+        return [{ x: 0, y: 0, widthQ: W, lengthQ: H }];
+      }
+
+      const { side, spanQ: s, depthQ: d, offsetQ: o } = mat.notch;
+      let rects = [];
+
+      if (side === 'top') {
+        rects = [
+          { x: 0, y: 0, widthQ: o, lengthQ: H },
+          { x: o, y: d, widthQ: s, lengthQ: H - d },
+          { x: o + s, y: 0, widthQ: W - (o + s), lengthQ: H }
+        ];
+      } else if (side === 'bottom') {
+        rects = [
+          { x: 0, y: 0, widthQ: o, lengthQ: H },
+          { x: o, y: 0, widthQ: s, lengthQ: H - d },
+          { x: o + s, y: 0, widthQ: W - (o + s), lengthQ: H }
+        ];
+      } else if (side === 'left') {
+        rects = [
+          { x: 0, y: 0, widthQ: W, lengthQ: o },
+          { x: d, y: o, widthQ: W - d, lengthQ: s },
+          { x: 0, y: o + s, widthQ: W, lengthQ: H - (o + s) }
+        ];
+      } else if (side === 'right') {
+        rects = [
+          { x: 0, y: 0, widthQ: W, lengthQ: o },
+          { x: 0, y: o, widthQ: W - d, lengthQ: s },
+          { x: 0, y: o + s, widthQ: W, lengthQ: H - (o + s) }
+        ];
+      }
+
+      return rects.filter(rect => rect.widthQ > 0 && rect.lengthQ > 0);
+    }
+
+    function rotateRect(rect, rotation, widthQ, lengthQ) {
+      const corners = [
+        transformPoint(rect.x, rect.y, rotation, widthQ, lengthQ),
+        transformPoint(rect.x + rect.widthQ, rect.y, rotation, widthQ, lengthQ),
+        transformPoint(rect.x + rect.widthQ, rect.y + rect.lengthQ, rotation, widthQ, lengthQ),
+        transformPoint(rect.x, rect.y + rect.lengthQ, rotation, widthQ, lengthQ)
+      ];
+
+      const xs = corners.map(point => point.x);
+      const ys = corners.map(point => point.y);
+      const minX = Math.min(...xs);
+      const maxX = Math.max(...xs);
+      const minY = Math.min(...ys);
+      const maxY = Math.max(...ys);
+
+      return {
+        x: minX,
+        y: minY,
+        widthQ: maxX - minX,
+        lengthQ: maxY - minY
+      };
+    }
+
+    function occupiedRects(mat, absolute = true) {
+      const localRects = canonicalOccupiedRects(mat).map(rect =>
+        rotateRect(rect, mat.rotation, mat.widthQ, mat.lengthQ)
+      );
+
+      if (!absolute) return localRects;
+
+      return localRects.map(rect => ({
+        x: rect.x + mat.xQ,
+        y: rect.y + mat.yQ,
+        widthQ: rect.widthQ,
+        lengthQ: rect.lengthQ
+      }));
+    }
+
+    function rectsOverlap(a, b) {
+      return (
+        a.x < b.x + b.widthQ &&
+        a.x + a.widthQ > b.x &&
+        a.y < b.y + b.lengthQ &&
+        a.y + a.lengthQ > b.y
+      );
+    }
+
+    function circleIntersectsRect(circle, rect) {
+      const closestX = clamp(circle.cx, rect.x, rect.x + rect.widthQ);
+      const closestY = clamp(circle.cy, rect.y, rect.y + rect.lengthQ);
+      const dx = circle.cx - closestX;
+      const dy = circle.cy - closestY;
+      return (dx * dx + dy * dy) < (circle.radiusQ * circle.radiusQ);
+    }
+
+    function poleCircle() {
+      const radiusQ = state.pole.diameterQ / 2;
+      return {
+        cx: state.pole.leftQ + radiusQ,
+        cy: state.pole.topQ + radiusQ,
+        radiusQ
+      };
+    }
+
+    function poleInsideRoom() {
+      return (
+        state.pole.leftQ >= 0 &&
+        state.pole.topQ >= 0 &&
+        state.pole.leftQ + state.pole.diameterQ <= state.room.widthQ &&
+        state.pole.topQ + state.pole.diameterQ <= state.room.lengthQ
+      );
+    }
+
+    function computeStatuses() {
+      const statuses = new Map();
+      const placed = state.mats.filter(mat => mat.placed);
+      const pole = poleCircle();
+
+      for (const mat of state.mats) {
+        statuses.set(mat.id, []);
+      }
+
+      for (const mat of placed) {
+        const dims = effectiveDimensions(mat);
+        const issues = statuses.get(mat.id);
+
+        if (
+          mat.xQ < 0 ||
+          mat.yQ < 0 ||
+          mat.xQ + dims.widthQ > state.room.widthQ ||
+          mat.yQ + dims.lengthQ > state.room.lengthQ
+        ) {
+          issues.push('Outside room');
+        }
+
+        if (occupiedRects(mat).some(rect => circleIntersectsRect(pole, rect))) {
+          issues.push('Touches pole');
+        }
+      }
+
+      for (let i = 0; i < placed.length; i += 1) {
+        for (let j = i + 1; j < placed.length; j += 1) {
+          const a = placed[i];
+          const b = placed[j];
+          const overlap = occupiedRects(a).some(rectA =>
+            occupiedRects(b).some(rectB => rectsOverlap(rectA, rectB))
+          );
+
+          if (overlap) {
+            statuses.get(a.id).push(`Overlaps Mat ${b.id}`);
+            statuses.get(b.id).push(`Overlaps Mat ${a.id}`);
+          }
+        }
+      }
+
+      return statuses;
+    }
+
+    function matPath(mat) {
+      const points = rotatedPolygon(mat);
+      if (!points.length) return '';
+      return `M ${points[0].x} ${points[0].y} ` +
+        points.slice(1).map(point => `L ${point.x} ${point.y}`).join(' ') +
+        ' Z';
+    }
+
+    function largestOccupiedRect(mat) {
+      const rects = occupiedRects(mat, false);
+      if (!rects.length) {
+        const dims = effectiveDimensions(mat);
+        return { x: 0, y: 0, widthQ: dims.widthQ, lengthQ: dims.lengthQ };
+      }
+      return rects.reduce((largest, rect) =>
+        rect.widthQ * rect.lengthQ > largest.widthQ * largest.lengthQ ? rect : largest
+      );
+    }
+
+    function matShapeSummary(mat) {
+      const base = `${formatQ(mat.widthQ)} × ${formatQ(mat.lengthQ)}`;
+      if (mat.type !== 'notched') return base;
+      const side = mat.notch.side[0].toUpperCase() + mat.notch.side.slice(1);
+      return `${base} · ${side} cutout ${formatQ(mat.notch.spanQ)} wide × ${formatQ(mat.notch.depthQ)} deep`;
+    }
+
+    function matStatusLabel(mat, issues) {
+      if (!mat.placed) return { text: 'Unplaced', className: 'warn' };
+      if (issues.length) return { text: issues[0], className: 'error' };
+      return { text: 'OK', className: 'ok' };
+    }
+
+    function calculateFitScale() {
+      const widthIn = fromQ(state.room.widthQ);
+      const lengthIn = fromQ(state.room.lengthQ);
+      const availableWidth = Math.max(300, els.canvasViewport.clientWidth - 52);
+      const availableHeight = Math.max(300, els.canvasViewport.clientHeight - 52);
+      view.fitPxPerInch = clamp(Math.min(availableWidth / widthIn, availableHeight / lengthIn), 0.75, 30);
+    }
+
+    function renderCanvas() {
+      const statuses = computeStatuses();
+      const widthQ = state.room.widthQ;
+      const lengthQ = state.room.lengthQ;
+      const pxPerInch = view.fitPxPerInch * view.zoom;
+      const svgWidthPx = Math.max(40, fromQ(widthQ) * pxPerInch);
+      const svgHeightPx = Math.max(40, fromQ(lengthQ) * pxPerInch);
+      const pole = poleCircle();
+      const fontSizeQ = clamp(5, 16, 52 / Math.max(pxPerInch, 0.1));
+      const smallFontQ = clamp(4, 12, 42 / Math.max(pxPerInch, 0.1));
+      const selected = getMat(selectedMatId);
+      const placedMats = state.mats.filter(mat => mat.placed);
+      const orderedMats = placedMats
+        .filter(mat => mat.id !== selectedMatId)
+        .concat(selected && selected.placed ? [selected] : []);
+
+      const gridMarkup = view.showGrid ? `
+        <rect x="0" y="0" width="${widthQ}" height="${lengthQ}" fill="url(#quarterGrid)"></rect>
+        <rect x="0" y="0" width="${widthQ}" height="${lengthQ}" fill="url(#inchGrid)"></rect>
+      ` : '';
+
+      const poleInvalid = !poleInsideRoom();
+      const poleMarkup = `
+        <g aria-label="4 inch pole">
+          <circle
+            cx="${pole.cx}"
+            cy="${pole.cy}"
+            r="${pole.radiusQ}"
+            fill="${poleInvalid ? '#fecaca' : '#cbd5e1'}"
+            stroke="${poleInvalid ? '#b91c1c' : '#475569'}"
+            stroke-width="2"
+            vector-effect="non-scaling-stroke"
+          ></circle>
+          <line x1="${pole.cx - pole.radiusQ}" y1="${pole.cy}" x2="${pole.cx + pole.radiusQ}" y2="${pole.cy}" stroke="#64748b" stroke-width="1" vector-effect="non-scaling-stroke"></line>
+          <line x1="${pole.cx}" y1="${pole.cy - pole.radiusQ}" x2="${pole.cx}" y2="${pole.cy + pole.radiusQ}" stroke="#64748b" stroke-width="1" vector-effect="non-scaling-stroke"></line>
+          <text x="${pole.cx}" y="${pole.cy + smallFontQ * 0.35}" text-anchor="middle" font-size="${smallFontQ}" font-weight="800" fill="#334155" pointer-events="none">4″</text>
+        </g>
+      `;
+
+      const matsMarkup = orderedMats.map(mat => {
+        const issues = statuses.get(mat.id) || [];
+        const invalid = issues.length > 0;
+        const isSelected = mat.id === selectedMatId;
+        const labelRect = largestOccupiedRect(mat);
+        const labelX = mat.xQ + labelRect.x + labelRect.widthQ / 2;
+        const labelY = mat.yQ + labelRect.y + labelRect.lengthQ / 2;
+        const dims = effectiveDimensions(mat);
+        const canShowDimensions = dims.widthQ >= fontSizeQ * 5 && dims.lengthQ >= fontSizeQ * 3;
+        const fill = invalid ? '#fecaca' : isSelected ? '#bfdbfe' : mat.type === 'notched' ? '#d8f3dc' : '#dbeafe';
+        const stroke = invalid ? '#b91c1c' : isSelected ? '#2563eb' : '#334155';
+        const title = `Mat ${mat.id}: ${matShapeSummary(mat)}${issues.length ? ` — ${issues.join(', ')}` : ''}`;
+
+        return `
+          <g class="mat-group" data-mat-id="${mat.id}" tabindex="0" aria-label="${escapeHtml(title)}">
+            <title>${escapeHtml(title)}</title>
+            <path
+              d="${matPath(mat)}"
+              transform="translate(${mat.xQ} ${mat.yQ})"
+              fill="${fill}"
+              stroke="${stroke}"
+              stroke-width="${isSelected || invalid ? 3 : 2}"
+              vector-effect="non-scaling-stroke"
+              stroke-linejoin="round"
+            ></path>
+            <text
+              x="${labelX}"
+              y="${canShowDimensions ? labelY - fontSizeQ * 0.16 : labelY + fontSizeQ * 0.32}"
+              text-anchor="middle"
+              font-size="${fontSizeQ}"
+              font-weight="850"
+              fill="#172033"
+              pointer-events="none"
+            >Mat ${mat.id}</text>
+            ${canShowDimensions ? `
+              <text
+                x="${labelX}"
+                y="${labelY + smallFontQ * 1.05}"
+                text-anchor="middle"
+                font-size="${smallFontQ}"
+                font-weight="650"
+                fill="#475467"
+                pointer-events="none"
+              >${formatQ(dims.widthQ)} × ${formatQ(dims.lengthQ)}</text>
+            ` : ''}
+          </g>
+        `;
+      }).join('');
+
+      els.roomSvg.setAttribute('viewBox', `0 0 ${widthQ} ${lengthQ}`);
+      els.roomSvg.setAttribute('width', svgWidthPx);
+      els.roomSvg.setAttribute('height', svgHeightPx);
+      els.roomSvg.innerHTML = `
+        <defs>
+          <pattern id="quarterGrid" width="1" height="1" patternUnits="userSpaceOnUse">
+            <path d="M 1 0 L 0 0 0 1" fill="none" stroke="#e4e9f0" stroke-width="0.45" vector-effect="non-scaling-stroke"></path>
+          </pattern>
+          <pattern id="inchGrid" width="4" height="4" patternUnits="userSpaceOnUse">
+            <path d="M 4 0 L 0 0 0 4" fill="none" stroke="#c7d0dc" stroke-width="0.8" vector-effect="non-scaling-stroke"></path>
+          </pattern>
+        </defs>
+        <rect x="0" y="0" width="${widthQ}" height="${lengthQ}" fill="#ffffff"></rect>
+        ${gridMarkup}
+        ${poleMarkup}
+        ${matsMarkup}
+        <rect x="0" y="0" width="${widthQ}" height="${lengthQ}" fill="none" stroke="#0f172a" stroke-width="2" vector-effect="non-scaling-stroke"></rect>
+      `;
+
+      renderStatus(statuses);
+    }
+
+    function renderStatus(statuses = computeStatuses()) {
+      const invalidMats = state.mats.filter(mat => mat.placed && (statuses.get(mat.id) || []).length > 0);
+      const placedCount = state.mats.filter(mat => mat.placed).length;
+
+      els.statusBanner.className = 'status-banner';
+
+      if (!poleInsideRoom()) {
+        els.statusBanner.classList.add('error');
+        els.statusText.textContent = 'The pole extends outside the room. Adjust its top or left clearance.';
+        return;
+      }
+
+      if (invalidMats.length) {
+        const ids = invalidMats.map(mat => `Mat ${mat.id}`).join(', ');
+        els.statusBanner.classList.add('error');
+        els.statusText.textContent = `${ids} ${invalidMats.length === 1 ? 'has' : 'have'} a placement conflict.`;
+        return;
+      }
+
+      if (state.mats.length === 0) {
+        els.statusBanner.classList.add('warn');
+        els.statusText.textContent = 'Add mats from the panel on the right.';
+        return;
+      }
+
+      if (placedCount === 0) {
+        els.statusBanner.classList.add('warn');
+        els.statusText.textContent = 'Your mats are listed but none are placed in the room yet.';
+        return;
+      }
+
+      els.statusBanner.classList.add('ok');
+      els.statusText.textContent = `All ${placedCount} placed ${placedCount === 1 ? 'mat is' : 'mats are'} valid.`;
+    }
+
+    function renderMatList() {
+      const statuses = computeStatuses();
+      els.matCount.textContent = `${state.mats.length} ${state.mats.length === 1 ? 'mat' : 'mats'}`;
+
+      if (!state.mats.length) {
+        els.matList.innerHTML = `
+          <div class="empty-state">
+            No mats yet.<br>
+            Add each existing piece below, including the notched piece.
+          </div>
+        `;
+        return;
+      }
+
+      els.matList.innerHTML = state.mats.map(mat => {
+        const issues = statuses.get(mat.id) || [];
+        const status = matStatusLabel(mat, issues);
+        const dims = effectiveDimensions(mat);
+        const placement = mat.placed
+          ? `Position: ${formatQ(mat.xQ)} from left, ${formatQ(mat.yQ)} from top · ${mat.rotation}°`
+          : `Orientation: ${mat.rotation}°`;
+        const selectedClass = mat.id === selectedMatId ? ' selected' : '';
+        const invalidClass = issues.length ? ' invalid' : '';
+
+        return `
+          <article class="mat-card${selectedClass}${invalidClass}" data-card-id="${mat.id}">
+            <div class="mat-card-top">
+              <div>
+                <p class="mat-title">Mat ${mat.id}</p>
+                <div class="mat-meta">${escapeHtml(matShapeSummary(mat))}</div>
+                <div class="mat-meta">Current footprint: ${formatQ(dims.widthQ)} × ${formatQ(dims.lengthQ)}</div>
+                <div class="mat-meta">${escapeHtml(placement)}</div>
+              </div>
+              <span class="status-pill ${status.className}" title="${escapeHtml(issues.join(', '))}">${escapeHtml(status.text)}</span>
+            </div>
+            <div class="mat-actions">
+              <button class="btn small secondary" data-action="select" data-id="${mat.id}" type="button">Select</button>
+              <button class="btn small secondary" data-action="${mat.placed ? 'unplace' : 'place'}" data-id="${mat.id}" type="button">${mat.placed ? 'Unplace' : 'Place'}</button>
+              <button class="btn small secondary" data-action="rotate" data-id="${mat.id}" type="button">Rotate</button>
+              <button class="btn small secondary" data-action="edit" data-id="${mat.id}" type="button">Edit</button>
+              <button class="btn small danger" data-action="delete" data-id="${mat.id}" type="button">Delete</button>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function renderRoomInputs() {
+      els.roomWidth.value = qInput(state.room.widthQ);
+      els.roomLength.value = qInput(state.room.lengthQ);
+      els.poleLeft.value = qInput(state.pole.leftQ);
+      els.poleTop.value = qInput(state.pole.topQ);
+    }
+
+    function renderViewControls() {
+      els.showGrid.checked = view.showGrid;
+      els.zoomSlider.value = String(view.zoom);
+      els.zoomValue.textContent = `${Math.round(view.zoom * 100)}%`;
+    }
+
+    function renderAll({ recalculateFit = false } = {}) {
+      if (recalculateFit) calculateFitScale();
+      renderRoomInputs();
+      renderViewControls();
+      renderCanvas();
+      renderMatList();
+    }
+
+    function saveState(showConfirmation = false) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        const time = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        els.saveStatus.textContent = showConfirmation ? `Saved locally at ${time}` : `Autosaved at ${time}`;
+      } catch (error) {
+        console.error(error);
+        els.saveStatus.textContent = 'Could not save locally';
+      }
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return null;
+        return normalizeImportedState(JSON.parse(raw));
+      } catch (error) {
+        console.warn('Could not load saved state:', error);
+        return null;
+      }
+    }
+
+    function normalizeImportedState(data) {
+      if (!data || typeof data !== 'object') throw new Error('Invalid layout file.');
+      if (!data.room || !data.pole || !Array.isArray(data.mats)) throw new Error('Missing room, pole, or mat data.');
+
+      const widthQ = Math.max(1, Math.round(Number(data.room.widthQ)));
+      const lengthQ = Math.max(1, Math.round(Number(data.room.lengthQ)));
+      const leftQ = Math.round(Number(data.pole.leftQ));
+      const topQ = Math.round(Number(data.pole.topQ));
+
+      if (![widthQ, lengthQ, leftQ, topQ].every(Number.isFinite)) {
+        throw new Error('Room or pole measurements are invalid.');
+      }
+
+      const usedIds = new Set();
+      const mats = data.mats.map((rawMat, index) => {
+        const idCandidate = Math.max(1, Math.round(Number(rawMat.id || index + 1)));
+        let id = idCandidate;
+        while (usedIds.has(id)) id += 1;
+        usedIds.add(id);
+
+        const width = Math.max(1, Math.round(Number(rawMat.widthQ)));
+        const length = Math.max(1, Math.round(Number(rawMat.lengthQ)));
+        const rotation = [0, 90, 180, 270].includes(Number(rawMat.rotation)) ? Number(rawMat.rotation) : 0;
+        const type = rawMat.type === 'notched' ? 'notched' : 'rect';
+
+        if (![width, length].every(Number.isFinite)) {
+          throw new Error(`Mat ${id} has invalid dimensions.`);
+        }
+
+        let notch = null;
+        if (type === 'notched') {
+          const side = ['top', 'right', 'bottom', 'left'].includes(rawMat.notch?.side) ? rawMat.notch.side : 'top';
+          const spanQ = Math.round(Number(rawMat.notch?.spanQ));
+          const depthQ = Math.round(Number(rawMat.notch?.depthQ));
+          const offsetQ = Math.round(Number(rawMat.notch?.offsetQ));
+          if (![spanQ, depthQ, offsetQ].every(Number.isFinite)) {
+            throw new Error(`Mat ${id} has invalid cutout measurements.`);
+          }
+          notch = { side, spanQ, depthQ, offsetQ };
+          validateNotch({ type, widthQ: width, lengthQ: length, notch });
+        }
+
+        return {
+          id,
+          type,
+          widthQ: width,
+          lengthQ: length,
+          notch,
+          placed: Boolean(rawMat.placed),
+          xQ: Math.round(Number(rawMat.xQ) || 0),
+          yQ: Math.round(Number(rawMat.yQ) || 0),
+          rotation
+        };
+      });
+
+      const maxId = mats.reduce((max, mat) => Math.max(max, mat.id), 0);
+      return {
+        version: APP_VERSION,
+        room: { widthQ, lengthQ },
+        pole: { leftQ, topQ, diameterQ: POLE_DIAMETER_Q },
+        mats,
+        nextMatId: Math.max(maxId + 1, Math.round(Number(data.nextMatId)) || 1)
+      };
+    }
+
+    function updateAfterChange({ fit = false, list = true } = {}) {
+      if (fit) calculateFitScale();
+      renderCanvas();
+      if (list) renderMatList();
+      saveState();
+    }
+
+    function applyRoomSettings() {
+      const widthQ = toQ(els.roomWidth.value);
+      const lengthQ = toQ(els.roomLength.value);
+      const leftQ = toQ(els.poleLeft.value);
+      const topQ = toQ(els.poleTop.value);
+
+      if (widthQ === null || widthQ < 1 || lengthQ === null || lengthQ < 1) {
+        alert('Room width and length must each be at least ¼ inch.');
+        return;
+      }
+
+      if (leftQ === null || leftQ < 0 || topQ === null || topQ < 0) {
+        alert('Pole distances cannot be negative.');
+        return;
+      }
+
+      state.room.widthQ = widthQ;
+      state.room.lengthQ = lengthQ;
+      state.pole.leftQ = leftQ;
+      state.pole.topQ = topQ;
+      state.pole.diameterQ = POLE_DIAMETER_Q;
+      calculateFitScale();
+      renderAll();
+      saveState(true);
+    }
+
+    function validateNotch(matLike) {
+      if (matLike.type !== 'notched') return;
+      const { side, spanQ, depthQ, offsetQ } = matLike.notch;
+      const edgeLengthQ = (side === 'top' || side === 'bottom') ? matLike.widthQ : matLike.lengthQ;
+      const perpendicularQ = (side === 'top' || side === 'bottom') ? matLike.lengthQ : matLike.widthQ;
+
+      if (spanQ < 1 || depthQ < 1 || offsetQ < 0) {
+        throw new Error('Cutout measurements must be zero or greater, and the opening and depth must each be at least ¼ inch.');
+      }
+
+      if (offsetQ + spanQ > edgeLengthQ) {
+        throw new Error('The cutout opening and its offset extend past the selected mat edge.');
+      }
+
+      if (depthQ > perpendicularQ) {
+        throw new Error('The cutout depth is greater than the mat dimension it cuts into.');
+      }
+
+      if (spanQ === edgeLengthQ && depthQ === perpendicularQ) {
+        throw new Error('The cutout cannot remove the entire mat.');
+      }
+    }
+
+    function readMatForm() {
+      const type = els.matType.value;
+      const widthQ = toQ(els.matWidth.value);
+      const lengthQ = toQ(els.matLength.value);
+
+      if (widthQ === null || widthQ < 1 || lengthQ === null || lengthQ < 1) {
+        throw new Error('Mat width and length must each be at least ¼ inch.');
+      }
+
+      let notch = null;
+      if (type === 'notched') {
+        notch = {
+          side: els.notchSide.value,
+          spanQ: toQ(els.notchSpan.value),
+          depthQ: toQ(els.notchDepth.value),
+          offsetQ: toQ(els.notchOffset.value)
+        };
+
+        if (Object.values(notch).some(value => value === null)) {
+          throw new Error('Enter valid cutout measurements.');
+        }
+      }
+
+      const matLike = { type, widthQ, lengthQ, notch };
+      validateNotch(matLike);
+      return matLike;
+    }
+
+    function saveMatFromForm() {
+      let values;
+      try {
+        values = readMatForm();
+      } catch (error) {
+        alert(error.message);
+        return;
+      }
+
+      if (editingMatId !== null) {
+        const mat = getMat(editingMatId);
+        if (!mat) return;
+        mat.type = values.type;
+        mat.widthQ = values.widthQ;
+        mat.lengthQ = values.lengthQ;
+        mat.notch = values.notch;
+        finishEditing();
+        selectedMatId = mat.id;
+      } else {
+        const mat = {
+          id: state.nextMatId,
+          type: values.type,
+          widthQ: values.widthQ,
+          lengthQ: values.lengthQ,
+          notch: values.notch,
+          placed: false,
+          xQ: 0,
+          yQ: 0,
+          rotation: 0
+        };
+        state.nextMatId += 1;
+        state.mats.push(mat);
+        selectedMatId = mat.id;
+      }
+
+      renderAll();
+      saveState(true);
+      els.matWidth.focus();
+    }
+
+    function startEditing(matId) {
+      const mat = getMat(matId);
+      if (!mat) return;
+      editingMatId = mat.id;
+      els.matType.value = mat.type;
+      els.matWidth.value = qInput(mat.widthQ);
+      els.matLength.value = qInput(mat.lengthQ);
+
+      if (mat.type === 'notched') {
+        els.notchSide.value = mat.notch.side;
+        els.notchSpan.value = qInput(mat.notch.spanQ);
+        els.notchDepth.value = qInput(mat.notch.depthQ);
+        els.notchOffset.value = qInput(mat.notch.offsetQ);
+      }
+
+      updateNotchFields();
+      els.matFormTitle.textContent = `Edit Mat ${mat.id}`;
+      els.editingBadge.classList.add('visible');
+      els.saveMatBtn.textContent = 'Save changes';
+      els.cancelEditBtn.style.display = '';
+      els.matFormCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function finishEditing() {
+      editingMatId = null;
+      els.matFormTitle.textContent = 'Add a mat';
+      els.editingBadge.classList.remove('visible');
+      els.saveMatBtn.textContent = 'Add mat';
+      els.cancelEditBtn.style.display = 'none';
+      els.matType.value = 'rect';
+      els.matWidth.value = '48';
+      els.matLength.value = '72';
+      els.notchSide.value = 'top';
+      els.notchSpan.value = '4';
+      els.notchDepth.value = '4';
+      els.notchOffset.value = '0';
+      updateNotchFields();
+    }
+
+    function updateNotchFields() {
+      const isNotched = els.matType.value === 'notched';
+      els.notchFields.classList.toggle('visible', isNotched);
+      const side = els.notchSide.value;
+      els.notchOffsetLabel.textContent = (side === 'top' || side === 'bottom')
+        ? 'Offset from left end of edge'
+        : 'Offset from top end of edge';
+    }
+
+    function rotateMat(matId) {
+      const mat = getMat(matId);
+      if (!mat) return;
+
+      if (mat.placed) {
+        const oldDims = effectiveDimensions(mat);
+        const centerX = mat.xQ + oldDims.widthQ / 2;
+        const centerY = mat.yQ + oldDims.lengthQ / 2;
+        mat.rotation = (mat.rotation + 90) % 360;
+        const newDims = effectiveDimensions(mat);
+        mat.xQ = Math.round(centerX - newDims.widthQ / 2);
+        mat.yQ = Math.round(centerY - newDims.lengthQ / 2);
+      } else {
+        mat.rotation = (mat.rotation + 90) % 360;
+      }
+
+      selectedMatId = mat.id;
+      updateAfterChange();
+    }
+
+    function canPlaceAt(mat, xQ, yQ) {
+      const previous = { xQ: mat.xQ, yQ: mat.yQ, placed: mat.placed };
+      mat.xQ = xQ;
+      mat.yQ = yQ;
+      mat.placed = true;
+
+      const statuses = computeStatuses();
+      const valid = (statuses.get(mat.id) || []).length === 0;
+
+      mat.xQ = previous.xQ;
+      mat.yQ = previous.yQ;
+      mat.placed = previous.placed;
+      return valid;
+    }
+
+    function findOpenPosition(mat) {
+      const dims = effectiveDimensions(mat);
+      const maxX = state.room.widthQ - dims.widthQ;
+      const maxY = state.room.lengthQ - dims.lengthQ;
+      if (maxX < 0 || maxY < 0) return { xQ: 0, yQ: 0 };
+
+      const scanStepQ = 4; // scan at 1-inch intervals for speed; final placement remains on ¼-inch grid
+      for (let yQ = 0; yQ <= maxY; yQ += scanStepQ) {
+        for (let xQ = 0; xQ <= maxX; xQ += scanStepQ) {
+          if (canPlaceAt(mat, xQ, yQ)) return { xQ, yQ };
+        }
+      }
+
+      return { xQ: 0, yQ: 0 };
+    }
+
+    function placeMat(matId) {
+      const mat = getMat(matId);
+      if (!mat) return;
+      const position = findOpenPosition(mat);
+      mat.placed = true;
+      mat.xQ = position.xQ;
+      mat.yQ = position.yQ;
+      selectedMatId = mat.id;
+      updateAfterChange();
+    }
+
+    function unplaceMat(matId) {
+      const mat = getMat(matId);
+      if (!mat) return;
+      mat.placed = false;
+      if (selectedMatId === mat.id) selectedMatId = null;
+      updateAfterChange();
+    }
+
+    function deleteMat(matId) {
+      const mat = getMat(matId);
+      if (!mat) return;
+      if (!confirm(`Delete Mat ${mat.id}?`)) return;
+      state.mats = state.mats.filter(item => item.id !== mat.id);
+      if (selectedMatId === mat.id) selectedMatId = null;
+      if (editingMatId === mat.id) finishEditing();
+      updateAfterChange();
+    }
+
+    function pointerToRoom(event) {
+      const rect = els.roomSvg.getBoundingClientRect();
+      return {
+        xQ: ((event.clientX - rect.left) / rect.width) * state.room.widthQ,
+        yQ: ((event.clientY - rect.top) / rect.height) * state.room.lengthQ
+      };
+    }
+
+    function startDrag(event, matId) {
+      const mat = getMat(matId);
+      if (!mat || !mat.placed || event.button !== 0) return;
+      const point = pointerToRoom(event);
+      drag = {
+        matId: mat.id,
+        offsetXQ: point.xQ - mat.xQ,
+        offsetYQ: point.yQ - mat.yQ
+      };
+      selectedMatId = mat.id;
+      renderCanvas();
+      renderMatList();
+      event.preventDefault();
+    }
+
+    function handlePointerMove(event) {
+      const rect = els.roomSvg.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        const point = pointerToRoom(event);
+        els.cursorPosition.textContent = `${formatQ(Math.round(point.xQ))} from left · ${formatQ(Math.round(point.yQ))} from top`;
+      }
+
+      if (!drag) return;
+      const mat = getMat(drag.matId);
+      if (!mat) return;
+      const point = pointerToRoom(event);
+      mat.xQ = Math.round(point.xQ - drag.offsetXQ);
+      mat.yQ = Math.round(point.yQ - drag.offsetYQ);
+      renderCanvas();
+      event.preventDefault();
+    }
+
+    function handlePointerUp() {
+      if (!drag) return;
+      drag = null;
+      renderMatList();
+      saveState();
+    }
+
+    function moveSelected(dxQ, dyQ) {
+      const mat = getMat(selectedMatId);
+      if (!mat || !mat.placed) return;
+      mat.xQ += dxQ;
+      mat.yQ += dyQ;
+      updateAfterChange();
+    }
+
+    function exportLayout() {
+      const payload = {
+        ...state,
+        exportedAt: new Date().toISOString()
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      const date = new Date().toISOString().slice(0, 10);
+      anchor.href = url;
+      anchor.download = `horse-mat-layout-${date}.json`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    async function importLayout(file) {
+      try {
+        const text = await file.text();
+        const imported = normalizeImportedState(JSON.parse(text));
+        state = imported;
+        selectedMatId = null;
+        editingMatId = null;
+        finishEditing();
+        calculateFitScale();
+        renderAll();
+        saveState(true);
+      } catch (error) {
+        console.error(error);
+        alert(`Could not import this layout: ${error.message}`);
+      } finally {
+        els.importFile.value = '';
+      }
+    }
+
+    function resetPlacements() {
+      if (!state.mats.some(mat => mat.placed)) return;
+      if (!confirm('Return every mat to the unplaced inventory?')) return;
+      state.mats.forEach(mat => {
+        mat.placed = false;
+        mat.xQ = 0;
+        mat.yQ = 0;
+        mat.rotation = 0;
+      });
+      selectedMatId = null;
+      updateAfterChange();
+    }
+
+    function clearProject() {
+      if (!confirm('Clear the room settings, pole position, and every mat? This cannot be undone unless you exported the layout.')) return;
+      state = defaultState();
+      selectedMatId = null;
+      editingMatId = null;
+      finishEditing();
+      calculateFitScale();
+      renderAll();
+      saveState(true);
+    }
+
+    els.applyRoomBtn.addEventListener('click', applyRoomSettings);
+    els.showGrid.addEventListener('change', () => {
+      view.showGrid = els.showGrid.checked;
+      renderCanvas();
+    });
+    els.zoomSlider.addEventListener('input', () => {
+      view.zoom = Number(els.zoomSlider.value);
+      els.zoomValue.textContent = `${Math.round(view.zoom * 100)}%`;
+      renderCanvas();
+    });
+    els.fitBtn.addEventListener('click', () => {
+      view.zoom = 1;
+      calculateFitScale();
+      renderViewControls();
+      renderCanvas();
+      els.canvasViewport.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    });
+
+    els.saveNowBtn.addEventListener('click', () => saveState(true));
+    els.exportBtn.addEventListener('click', exportLayout);
+    els.importBtn.addEventListener('click', () => els.importFile.click());
+    els.importFile.addEventListener('change', () => {
+      const file = els.importFile.files?.[0];
+      if (file) importLayout(file);
+    });
+    els.resetPlacementsBtn.addEventListener('click', resetPlacements);
+    els.clearProjectBtn.addEventListener('click', clearProject);
+
+    els.matType.addEventListener('change', updateNotchFields);
+    els.notchSide.addEventListener('change', updateNotchFields);
+    els.saveMatBtn.addEventListener('click', saveMatFromForm);
+    els.cancelEditBtn.addEventListener('click', finishEditing);
+
+    els.matList.addEventListener('click', event => {
+      const button = event.target.closest('button[data-action]');
+      if (!button) return;
+      const matId = Number(button.dataset.id);
+      const action = button.dataset.action;
+
+      if (action === 'select') {
+        selectedMatId = matId;
+        renderCanvas();
+        renderMatList();
+      } else if (action === 'place') {
+        placeMat(matId);
+      } else if (action === 'unplace') {
+        unplaceMat(matId);
+      } else if (action === 'rotate') {
+        rotateMat(matId);
+      } else if (action === 'edit') {
+        startEditing(matId);
+      } else if (action === 'delete') {
+        deleteMat(matId);
+      }
+    });
+
+    els.canvasViewport.addEventListener('pointerdown', event => {
+      const group = event.target.closest?.('.mat-group');
+      if (!group) {
+        if (event.button === 0) {
+          selectedMatId = null;
+          renderCanvas();
+          renderMatList();
+        }
+        return;
+      }
+      startDrag(event, Number(group.dataset.matId));
+    });
+
+    els.canvasViewport.addEventListener('contextmenu', event => {
+      const group = event.target.closest?.('.mat-group');
+      if (!group) return;
+      event.preventDefault();
+      rotateMat(Number(group.dataset.matId));
+    });
+
+    els.canvasViewport.addEventListener('pointerleave', () => {
+      if (!drag) els.cursorPosition.textContent = '—';
+    });
+
+    window.addEventListener('pointermove', handlePointerMove, { passive: false });
+    window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointercancel', handlePointerUp);
+
+    window.addEventListener('keydown', event => {
+      const activeTag = document.activeElement?.tagName;
+      if (activeTag === 'INPUT' || activeTag === 'SELECT' || activeTag === 'TEXTAREA') return;
+      if (!selectedMatId) return;
+
+      const stepQ = event.shiftKey ? 4 : 1;
+      if (event.key === 'ArrowLeft') {
+        moveSelected(-stepQ, 0);
+      } else if (event.key === 'ArrowRight') {
+        moveSelected(stepQ, 0);
+      } else if (event.key === 'ArrowUp') {
+        moveSelected(0, -stepQ);
+      } else if (event.key === 'ArrowDown') {
+        moveSelected(0, stepQ);
+      } else if (event.key.toLowerCase() === 'r') {
+        rotateMat(selectedMatId);
+      } else if (event.key === 'Delete' || event.key === 'Backspace') {
+        unplaceMat(selectedMatId);
+      } else {
+        return;
+      }
+      event.preventDefault();
+    });
+
+    const resizeObserver = new ResizeObserver(() => {
+      calculateFitScale();
+      renderCanvas();
+    });
+    resizeObserver.observe(els.canvasViewport);
+
+    renderRoomInputs();
+    updateNotchFields();
+    calculateFitScale();
+    renderAll();
+  </script>
 </body>
 </html>
