@@ -294,6 +294,16 @@
       font-size: 11px;
     }
 
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+      transform: none;
+    }
+
+    .btn:disabled:hover {
+      transform: none;
+    }
+
     .toggle-row {
       display: flex;
       align-items: center;
@@ -626,6 +636,30 @@
       background: var(--border);
     }
 
+    .auto-fit-result {
+      min-height: 34px;
+      margin-top: 10px;
+      padding: 8px 9px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      background: #f8fafc;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    .auto-fit-result.success {
+      border-color: #b7dfc8;
+      color: var(--success);
+      background: var(--success-bg);
+    }
+
+    .auto-fit-result.warn {
+      border-color: #ecd28d;
+      color: var(--warning);
+      background: var(--warning-bg);
+    }
+
     .visually-hidden {
       position: absolute !important;
       width: 1px !important;
@@ -641,6 +675,62 @@
     @media (max-width: 1150px) {
       .workspace {
         grid-template-columns: 280px minmax(380px, 1fr) 320px;
+      }
+    }
+
+    @media print {
+      @page {
+        size: landscape;
+        margin: 0.3in;
+      }
+
+      html,
+      body {
+        width: auto;
+        height: auto;
+        overflow: visible;
+        background: white;
+      }
+
+      body.print-floorplan .app {
+        display: block;
+        height: auto;
+      }
+
+      body.print-floorplan .app-header,
+      body.print-floorplan .sidebar,
+      body.print-floorplan .inventory-panel,
+      body.print-floorplan .status-banner,
+      body.print-floorplan .canvas-footer {
+        display: none !important;
+      }
+
+      body.print-floorplan .workspace,
+      body.print-floorplan .center-panel,
+      body.print-floorplan .canvas-viewport,
+      body.print-floorplan .canvas-shell {
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        border: 0 !important;
+        background: white !important;
+      }
+
+      body.print-floorplan #roomSvg {
+        display: block;
+        width: 100% !important;
+        height: auto !important;
+        max-height: 7.65in;
+        margin: 0 auto;
+        box-shadow: none;
+        break-inside: avoid;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
       }
     }
   </style>
@@ -699,6 +789,11 @@
             <input id="showGrid" type="checkbox" checked>
           </label>
 
+          <label class="toggle-row" for="showQuadrants">
+            <span>Show pole quadrant guides</span>
+            <input id="showQuadrants" type="checkbox" checked>
+          </label>
+
           <div class="zoom-row">
             <input id="zoomSlider" type="range" min="0.5" max="3" step="0.1" value="1" aria-label="Zoom">
             <span class="zoom-value" id="zoomValue">100%</span>
@@ -710,12 +805,23 @@
         </section>
 
         <section class="card">
+          <h2>Auto-layout</h2>
+          <p class="helper">Placed mats stay fixed. Unplaced rectangular mats are arranged to maximize top-left coverage first, then bottom-left coverage. Mats may cross a quadrant line.</p>
+          <div class="button-row">
+            <button class="btn primary" id="autoFitBtn" type="button">Auto-place unplaced mats</button>
+            <button class="btn secondary" id="undoAutoFitBtn" type="button" disabled>Undo auto-place</button>
+          </div>
+          <div class="auto-fit-result" id="autoFitResult">Pre-place the notched mat and any other mats you want to keep fixed.</div>
+        </section>
+
+        <section class="card">
           <h2>Save & share</h2>
           <p class="helper">Layouts autosave in this browser. Export a JSON file to move or share the layout.</p>
           <div class="button-row">
             <button class="btn secondary" id="saveNowBtn" type="button">Save now</button>
             <button class="btn secondary" id="exportBtn" type="button">Export layout</button>
             <button class="btn secondary" id="importBtn" type="button">Import layout</button>
+            <button class="btn secondary" id="printBtn" type="button">Print / save PDF</button>
             <input id="importFile" class="visually-hidden" type="file" accept="application/json,.json">
           </div>
           <div class="subtle-divider"></div>
@@ -731,6 +837,7 @@
             <li class="legend-item"><span class="legend-swatch"></span><span>Valid placed mat</span></li>
             <li class="legend-item"><span class="legend-swatch selected"></span><span>Selected mat</span></li>
             <li class="legend-item"><span class="legend-swatch invalid"></span><span>Overlap, pole collision, or outside room</span></li>
+            <li class="legend-item"><span style="width:18px;border-top:2px dashed #94a3b8"></span><span>Quadrant guides through pole center</span></li>
           </ul>
         </section>
       </aside>
@@ -856,9 +963,11 @@
     let selectedMatId = null;
     let editingMatId = null;
     let drag = null;
+    let lastAutoFitSnapshot = null;
     let view = {
       zoom: 1,
       showGrid: true,
+      showQuadrants: true,
       fitPxPerInch: 5
     };
 
@@ -869,12 +978,17 @@
       poleTop: document.getElementById('poleTop'),
       applyRoomBtn: document.getElementById('applyRoomBtn'),
       showGrid: document.getElementById('showGrid'),
+      showQuadrants: document.getElementById('showQuadrants'),
       zoomSlider: document.getElementById('zoomSlider'),
       zoomValue: document.getElementById('zoomValue'),
       fitBtn: document.getElementById('fitBtn'),
+      autoFitBtn: document.getElementById('autoFitBtn'),
+      undoAutoFitBtn: document.getElementById('undoAutoFitBtn'),
+      autoFitResult: document.getElementById('autoFitResult'),
       saveNowBtn: document.getElementById('saveNowBtn'),
       exportBtn: document.getElementById('exportBtn'),
       importBtn: document.getElementById('importBtn'),
+      printBtn: document.getElementById('printBtn'),
       importFile: document.getElementById('importFile'),
       resetPlacementsBtn: document.getElementById('resetPlacementsBtn'),
       clearProjectBtn: document.getElementById('clearProjectBtn'),
@@ -1253,6 +1367,13 @@
         <rect x="0" y="0" width="${widthQ}" height="${lengthQ}" fill="url(#inchGrid)"></rect>
       ` : '';
 
+      const quadrantMarkup = view.showQuadrants ? `
+        <g aria-label="Quadrant guides" pointer-events="none">
+          <line x1="${pole.cx}" y1="0" x2="${pole.cx}" y2="${lengthQ}" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="8 6" vector-effect="non-scaling-stroke"></line>
+          <line x1="0" y1="${pole.cy}" x2="${widthQ}" y2="${pole.cy}" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="8 6" vector-effect="non-scaling-stroke"></line>
+        </g>
+      ` : '';
+
       const poleInvalid = !poleInsideRoom();
       const poleMarkup = `
         <g aria-label="4 inch pole">
@@ -1334,6 +1455,7 @@
         </defs>
         <rect x="0" y="0" width="${widthQ}" height="${lengthQ}" fill="#ffffff"></rect>
         ${gridMarkup}
+        ${quadrantMarkup}
         ${poleMarkup}
         ${matsMarkup}
         <rect x="0" y="0" width="${widthQ}" height="${lengthQ}" fill="none" stroke="#0f172a" stroke-width="2" vector-effect="non-scaling-stroke"></rect>
@@ -1433,6 +1555,7 @@
 
     function renderViewControls() {
       els.showGrid.checked = view.showGrid;
+      els.showQuadrants.checked = view.showQuadrants;
       els.zoomSlider.value = String(view.zoom);
       els.zoomValue.textContent = `${Math.round(view.zoom * 100)}%`;
     }
@@ -1532,7 +1655,18 @@
       };
     }
 
-    function updateAfterChange({ fit = false, list = true } = {}) {
+    function clearAutoFitUndo() {
+      lastAutoFitSnapshot = null;
+      els.undoAutoFitBtn.disabled = true;
+    }
+
+    function updateAfterChange({ fit = false, list = true, preserveAutoUndo = false } = {}) {
+      if (!preserveAutoUndo) {
+        if (lastAutoFitSnapshot) {
+          setAutoFitResult('The layout changed after auto-placement. Run auto-layout again when the fixed mats are ready.');
+        }
+        clearAutoFitUndo();
+      }
       if (fit) calculateFitScale();
       renderCanvas();
       if (list) renderMatList();
@@ -1555,6 +1689,8 @@
         return;
       }
 
+      clearAutoFitUndo();
+      setAutoFitResult('Room settings changed. Pre-place any fixed mats, then run auto-layout.');
       state.room.widthQ = widthQ;
       state.room.lengthQ = lengthQ;
       state.pole.leftQ = leftQ;
@@ -1624,6 +1760,9 @@
         alert(error.message);
         return;
       }
+
+      clearAutoFitUndo();
+      setAutoFitResult('Mat inventory changed. Run auto-layout when the fixed mats are ready.');
 
       if (editingMatId !== null) {
         const mat = getMat(editingMatId);
@@ -1827,6 +1966,8 @@
     function handlePointerUp() {
       if (!drag) return;
       drag = null;
+      clearAutoFitUndo();
+      setAutoFitResult('A fixed placement changed. Run auto-layout again to refill the open space.');
       renderMatList();
       saveState();
     }
@@ -1861,6 +2002,8 @@
         const text = await file.text();
         const imported = normalizeImportedState(JSON.parse(text));
         state = imported;
+        clearAutoFitUndo();
+        setAutoFitResult('Layout imported. Pre-place any fixed mats, then run auto-layout.');
         selectedMatId = null;
         editingMatId = null;
         finishEditing();
@@ -1875,6 +2018,454 @@
       }
     }
 
+    function setAutoFitResult(message, type = '') {
+      els.autoFitResult.textContent = message;
+      els.autoFitResult.className = `auto-fit-result${type ? ` ${type}` : ''}`;
+    }
+
+    function snapshotPlacements() {
+      return state.mats.map(mat => ({
+        id: mat.id,
+        placed: mat.placed,
+        xQ: mat.xQ,
+        yQ: mat.yQ,
+        rotation: mat.rotation
+      }));
+    }
+
+    function restorePlacementSnapshot(snapshot) {
+      const byId = new Map(snapshot.map(item => [item.id, item]));
+      state.mats.forEach(mat => {
+        const saved = byId.get(mat.id);
+        if (!saved) return;
+        mat.placed = saved.placed;
+        mat.xQ = saved.xQ;
+        mat.yQ = saved.yQ;
+        mat.rotation = saved.rotation;
+      });
+    }
+
+    function rectangleAreaInside(rect, region) {
+      const left = Math.max(rect.x, region.x);
+      const top = Math.max(rect.y, region.y);
+      const right = Math.min(rect.x + rect.widthQ, region.x + region.widthQ);
+      const bottom = Math.min(rect.y + rect.lengthQ, region.y + region.lengthQ);
+      return Math.max(0, right - left) * Math.max(0, bottom - top);
+    }
+
+    function compareScoreArrays(a, b) {
+      const length = Math.max(a.length, b.length);
+      for (let i = 0; i < length; i += 1) {
+        const av = a[i] || 0;
+        const bv = b[i] || 0;
+        if (av !== bv) return av > bv ? 1 : -1;
+      }
+      return 0;
+    }
+
+    function sharedEdgeLength(a, b) {
+      let shared = 0;
+      if (a.x + a.widthQ === b.x || b.x + b.widthQ === a.x) {
+        shared += Math.max(0, Math.min(a.y + a.lengthQ, b.y + b.lengthQ) - Math.max(a.y, b.y));
+      }
+      if (a.y + a.lengthQ === b.y || b.y + b.lengthQ === a.y) {
+        shared += Math.max(0, Math.min(a.x + a.widthQ, b.x + b.widthQ) - Math.max(a.x, b.x));
+      }
+      return shared;
+    }
+
+    function wallContactLength(rect) {
+      let contact = 0;
+      if (rect.x === 0) contact += rect.lengthQ;
+      if (rect.x + rect.widthQ === state.room.widthQ) contact += rect.lengthQ;
+      if (rect.y === 0) contact += rect.widthQ;
+      if (rect.y + rect.lengthQ === state.room.lengthQ) contact += rect.widthQ;
+      return contact;
+    }
+
+    function distanceFromPointToRect(point, rect) {
+      const dx = Math.max(rect.x - point.x, 0, point.x - (rect.x + rect.widthQ));
+      const dy = Math.max(rect.y - point.y, 0, point.y - (rect.y + rect.lengthQ));
+      return dx + dy;
+    }
+
+    function seededRandom(seed) {
+      let value = seed >>> 0;
+      return () => {
+        value += 0x6D2B79F5;
+        let t = value;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    function shuffled(items, seed) {
+      const result = [...items];
+      const random = seededRandom(seed);
+      for (let i = result.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(random() * (i + 1));
+        [result[i], result[j]] = [result[j], result[i]];
+      }
+      return result;
+    }
+
+    function uniqueMatOrders(mats) {
+      const area = mat => mat.widthQ * mat.lengthQ;
+      const maxSide = mat => Math.max(mat.widthQ, mat.lengthQ);
+      const minSide = mat => Math.min(mat.widthQ, mat.lengthQ);
+      const perimeter = mat => mat.widthQ + mat.lengthQ;
+      const aspect = mat => maxSide(mat) / Math.max(1, minSide(mat));
+      const orders = [
+        [...mats].sort((a, b) => area(b) - area(a) || b.id - a.id),
+        [...mats].sort((a, b) => area(a) - area(b) || a.id - b.id),
+        [...mats].sort((a, b) => maxSide(b) - maxSide(a) || area(b) - area(a)),
+        [...mats].sort((a, b) => minSide(b) - minSide(a) || area(b) - area(a)),
+        [...mats].sort((a, b) => perimeter(b) - perimeter(a) || area(b) - area(a)),
+        [...mats].sort((a, b) => aspect(b) - aspect(a) || area(b) - area(a)),
+        [...mats].sort((a, b) => a.id - b.id),
+        [...mats].sort((a, b) => b.id - a.id)
+      ];
+
+      for (let seed = 1; seed <= 12; seed += 1) {
+        orders.push(shuffled(mats, seed * 7919));
+      }
+
+      const seen = new Set();
+      return orders.filter(order => {
+        const key = order.map(mat => mat.id).join(',');
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    function buildFixedObstacles() {
+      const obstacles = [];
+      state.mats.filter(mat => mat.placed).forEach(mat => {
+        occupiedRects(mat).forEach(rect => {
+          obstacles.push({
+            rect,
+            fixed: true,
+            notched: mat.type === 'notched',
+            matId: mat.id
+          });
+        });
+      });
+      return obstacles;
+    }
+
+    function autoFitAnchorPoint(fixedMats) {
+      const notched = fixedMats.filter(mat => mat.type === 'notched');
+      const anchors = notched.length ? notched : fixedMats;
+      if (!anchors.length) {
+        const pole = poleCircle();
+        return { x: pole.cx, y: pole.cy };
+      }
+
+      const rects = anchors.flatMap(mat => occupiedRects(mat));
+      const minX = Math.min(...rects.map(rect => rect.x));
+      const minY = Math.min(...rects.map(rect => rect.y));
+      const maxX = Math.max(...rects.map(rect => rect.x + rect.widthQ));
+      const maxY = Math.max(...rects.map(rect => rect.y + rect.lengthQ));
+      return { x: (minX + maxX) / 2, y: (minY + maxY) / 2 };
+    }
+
+    function generateCandidateCoordinates(widthQ, lengthQ, obstacles) {
+      const pole = poleCircle();
+      const maxX = state.room.widthQ - widthQ;
+      const maxY = state.room.lengthQ - lengthQ;
+      const xValues = new Set([
+        0,
+        maxX,
+        Math.round(pole.cx - widthQ),
+        Math.round(pole.cx),
+        state.pole.leftQ - widthQ,
+        state.pole.leftQ,
+        state.pole.leftQ + state.pole.diameterQ - widthQ,
+        state.pole.leftQ + state.pole.diameterQ
+      ]);
+      const yValues = new Set([
+        0,
+        maxY,
+        Math.round(pole.cy - lengthQ),
+        Math.round(pole.cy),
+        state.pole.topQ - lengthQ,
+        state.pole.topQ,
+        state.pole.topQ + state.pole.diameterQ - lengthQ,
+        state.pole.topQ + state.pole.diameterQ
+      ]);
+
+      obstacles.forEach(({ rect }) => {
+        xValues.add(rect.x - widthQ);
+        xValues.add(rect.x);
+        xValues.add(rect.x + rect.widthQ - widthQ);
+        xValues.add(rect.x + rect.widthQ);
+        yValues.add(rect.y - lengthQ);
+        yValues.add(rect.y);
+        yValues.add(rect.y + rect.lengthQ - lengthQ);
+        yValues.add(rect.y + rect.lengthQ);
+      });
+
+      const xs = [...xValues]
+        .map(Math.round)
+        .filter(value => value >= 0 && value <= maxX)
+        .sort((a, b) => a - b);
+      const ys = [...yValues]
+        .map(Math.round)
+        .filter(value => value >= 0 && value <= maxY)
+        .sort((a, b) => a - b);
+
+      const coordinates = [];
+      for (const yQ of ys) {
+        for (const xQ of xs) coordinates.push({ xQ, yQ });
+      }
+      return coordinates;
+    }
+
+    function candidatePlacement(mat, rotation, xQ, yQ, obstacles, anchor, stage) {
+      const dims = effectiveDimensions(mat, rotation);
+      const rect = { x: xQ, y: yQ, widthQ: dims.widthQ, lengthQ: dims.lengthQ };
+      const pole = poleCircle();
+
+      if (
+        rect.x < 0 || rect.y < 0 ||
+        rect.x + rect.widthQ > state.room.widthQ ||
+        rect.y + rect.lengthQ > state.room.lengthQ
+      ) return null;
+      if (circleIntersectsRect(pole, rect)) return null;
+      if (obstacles.some(obstacle => rectsOverlap(rect, obstacle.rect))) return null;
+
+      const quadrantII = { x: 0, y: 0, widthQ: pole.cx, lengthQ: pole.cy };
+      const quadrantIII = { x: 0, y: pole.cy, widthQ: pole.cx, lengthQ: state.room.lengthQ - pole.cy };
+      const q2Area = rectangleAreaInside(rect, quadrantII);
+      const q3Area = rectangleAreaInside(rect, quadrantIII);
+      const totalArea = rect.widthQ * rect.lengthQ;
+      const rightArea = totalArea - q2Area - q3Area;
+
+      let notchContact = 0;
+      let fixedContact = 0;
+      let autoContact = 0;
+      obstacles.forEach(obstacle => {
+        const shared = sharedEdgeLength(rect, obstacle.rect);
+        if (!shared) return;
+        if (obstacle.notched) notchContact += shared;
+        else if (obstacle.fixed) fixedContact += shared;
+        else autoContact += shared;
+      });
+
+      const wallContact = wallContactLength(rect);
+      const anchorDistance = distanceFromPointToRect(anchor, rect);
+      const contactTotal = notchContact * 5 + fixedContact * 3 + autoContact;
+      const score = stage === 'secondary'
+        ? [q3Area, q2Area, contactTotal, notchContact, fixedContact + autoContact, -rightArea, -wallContact, -anchorDistance, -yQ, -xQ]
+        : [q2Area, q3Area, contactTotal, notchContact, fixedContact + autoContact, -rightArea, -wallContact, -anchorDistance, -yQ, -xQ];
+
+      return {
+        matId: mat.id,
+        rotation,
+        xQ,
+        yQ,
+        rect,
+        q2Area,
+        q3Area,
+        rightArea,
+        notchContact,
+        fixedContact,
+        autoContact,
+        wallContact,
+        anchorDistance,
+        score
+      };
+    }
+
+    function bestPlacementForMat(mat, obstacles, anchor, stage, minimumPrimaryRatio = 0) {
+      let best = null;
+      const rotations = mat.widthQ === mat.lengthQ ? [0] : [0, 90];
+      const totalArea = mat.widthQ * mat.lengthQ;
+
+      rotations.forEach(rotation => {
+        const dims = effectiveDimensions(mat, rotation);
+        if (dims.widthQ > state.room.widthQ || dims.lengthQ > state.room.lengthQ) return;
+        const coordinates = generateCandidateCoordinates(dims.widthQ, dims.lengthQ, obstacles);
+        coordinates.forEach(({ xQ, yQ }) => {
+          const candidate = candidatePlacement(mat, rotation, xQ, yQ, obstacles, anchor, stage);
+          if (!candidate) return;
+          if (stage === 'primary') {
+            if (candidate.q2Area <= 0) return;
+            if (candidate.q2Area / totalArea < minimumPrimaryRatio) return;
+          } else if (candidate.q3Area <= 0) {
+            return;
+          }
+          if (!best || compareScoreArrays(candidate.score, best.score) > 0) best = candidate;
+        });
+      });
+
+      return best;
+    }
+
+    function addTrialPlacement(trial, placement) {
+      trial.placements.set(placement.matId, placement);
+      trial.obstacles.push({
+        rect: placement.rect,
+        fixed: false,
+        notched: false,
+        matId: placement.matId
+      });
+    }
+
+    function scoreTrial(trial) {
+      let q2Area = 0;
+      let q3Area = 0;
+      let rightArea = 0;
+      let notchContact = 0;
+      let fixedContact = 0;
+      let autoContact = 0;
+      let wallContact = 0;
+      let anchorDistance = 0;
+
+      trial.placements.forEach(placement => {
+        q2Area += placement.q2Area;
+        q3Area += placement.q3Area;
+        rightArea += placement.rightArea;
+        notchContact += placement.notchContact;
+        fixedContact += placement.fixedContact;
+        autoContact += placement.autoContact;
+        wallContact += placement.wallContact;
+        anchorDistance += placement.anchorDistance;
+      });
+
+      const contactTotal = notchContact * 5 + fixedContact * 3 + autoContact;
+      return [
+        q2Area,
+        q3Area,
+        contactTotal,
+        notchContact,
+        fixedContact + autoContact,
+        -rightArea,
+        -wallContact,
+        -anchorDistance,
+        trial.placements.size
+      ];
+    }
+
+    function runAutoFitSearch(eligibleMats) {
+      const fixedMats = state.mats.filter(mat => mat.placed);
+      const fixedObstacles = buildFixedObstacles();
+      const anchor = autoFitAnchorPoint(fixedMats);
+      const orders = uniqueMatOrders(eligibleMats);
+      const minimumRatios = [0, 0.2];
+      let bestTrial = null;
+
+      orders.forEach(order => {
+        minimumRatios.forEach(minimumPrimaryRatio => {
+          const trial = {
+            obstacles: fixedObstacles.map(obstacle => ({ ...obstacle, rect: { ...obstacle.rect } })),
+            placements: new Map()
+          };
+
+          order.forEach(mat => {
+            const placement = bestPlacementForMat(mat, trial.obstacles, anchor, 'primary', minimumPrimaryRatio);
+            if (placement) addTrialPlacement(trial, placement);
+          });
+
+          order.forEach(mat => {
+            if (trial.placements.has(mat.id)) return;
+            const placement = bestPlacementForMat(mat, trial.obstacles, anchor, 'secondary');
+            if (placement) addTrialPlacement(trial, placement);
+          });
+
+          trial.score = scoreTrial(trial);
+          if (!bestTrial || compareScoreArrays(trial.score, bestTrial.score) > 0) bestTrial = trial;
+        });
+      });
+
+      return bestTrial;
+    }
+
+    function autoFitUnplacedMats() {
+      const statuses = computeStatuses();
+      const invalidFixed = state.mats.filter(mat => mat.placed && (statuses.get(mat.id) || []).length);
+      if (!poleInsideRoom()) {
+        alert('Move the pole fully inside the room before running auto-layout.');
+        return;
+      }
+      if (invalidFixed.length) {
+        alert('Resolve placement conflicts in the mats that are already placed before running auto-layout.');
+        return;
+      }
+
+      const unplaced = state.mats.filter(mat => !mat.placed);
+      const eligible = unplaced.filter(mat => mat.type === 'rect');
+      const skippedNotched = unplaced.filter(mat => mat.type === 'notched');
+
+      if (!eligible.length) {
+        setAutoFitResult(skippedNotched.length
+          ? 'The remaining unplaced mat is notched. Place it manually before auto-layout.'
+          : 'There are no unplaced rectangular mats to arrange.', 'warn');
+        return;
+      }
+
+      const snapshot = snapshotPlacements();
+      els.autoFitBtn.disabled = true;
+      els.autoFitBtn.textContent = 'Auto-placing…';
+      setAutoFitResult('Evaluating several mat orders and orientations…');
+
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          try {
+            const bestTrial = runAutoFitSearch(eligible);
+            if (!bestTrial || bestTrial.placements.size === 0) {
+              setAutoFitResult('No valid position was found for the unplaced rectangular mats.', 'warn');
+              return;
+            }
+
+            bestTrial.placements.forEach(placement => {
+              const mat = getMat(placement.matId);
+              if (!mat) return;
+              mat.placed = true;
+              mat.xQ = placement.xQ;
+              mat.yQ = placement.yQ;
+              mat.rotation = placement.rotation;
+            });
+
+            lastAutoFitSnapshot = snapshot;
+            els.undoAutoFitBtn.disabled = false;
+            selectedMatId = null;
+            const notPlaced = eligible.length - bestTrial.placements.size;
+            const skippedText = skippedNotched.length ? ` ${skippedNotched.length} unplaced notched mat was skipped.` : '';
+            const remainingText = notPlaced ? ` ${notPlaced} rectangular ${notPlaced === 1 ? 'mat remains' : 'mats remain'} unplaced.` : '';
+            setAutoFitResult(`Auto-placed ${bestTrial.placements.size} of ${eligible.length} rectangular mats. Existing placements were not moved.${remainingText}${skippedText}`, 'success');
+            updateAfterChange({ preserveAutoUndo: true });
+          } catch (error) {
+            console.error(error);
+            setAutoFitResult(`Auto-layout could not complete: ${error.message}`, 'warn');
+          } finally {
+            els.autoFitBtn.disabled = false;
+            els.autoFitBtn.textContent = 'Auto-place unplaced mats';
+          }
+        }, 0);
+      });
+    }
+
+    function undoAutoFit() {
+      if (!lastAutoFitSnapshot) return;
+      restorePlacementSnapshot(lastAutoFitSnapshot);
+      lastAutoFitSnapshot = null;
+      els.undoAutoFitBtn.disabled = true;
+      selectedMatId = null;
+      setAutoFitResult('The most recent auto-layout was undone.');
+      updateAfterChange({ preserveAutoUndo: true });
+    }
+
+    function printFloorplan() {
+      document.body.classList.add('print-floorplan');
+      const cleanup = () => document.body.classList.remove('print-floorplan');
+      window.addEventListener('afterprint', cleanup, { once: true });
+      window.print();
+      setTimeout(cleanup, 1000);
+    }
+
     function resetPlacements() {
       if (!state.mats.some(mat => mat.placed)) return;
       if (!confirm('Return every mat to the unplaced inventory?')) return;
@@ -1885,12 +2476,15 @@
         mat.rotation = 0;
       });
       selectedMatId = null;
+      setAutoFitResult('All mats are unplaced. Place the notched mat and any other fixed mats first.');
       updateAfterChange();
     }
 
     function clearProject() {
       if (!confirm('Clear the room settings, pole position, and every mat? This cannot be undone unless you exported the layout.')) return;
       state = defaultState();
+      clearAutoFitUndo();
+      setAutoFitResult('Project cleared. Pre-place the notched mat and any other fixed mats.');
       selectedMatId = null;
       editingMatId = null;
       finishEditing();
@@ -1902,6 +2496,10 @@
     els.applyRoomBtn.addEventListener('click', applyRoomSettings);
     els.showGrid.addEventListener('change', () => {
       view.showGrid = els.showGrid.checked;
+      renderCanvas();
+    });
+    els.showQuadrants.addEventListener('change', () => {
+      view.showQuadrants = els.showQuadrants.checked;
       renderCanvas();
     });
     els.zoomSlider.addEventListener('input', () => {
@@ -1917,9 +2515,12 @@
       els.canvasViewport.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
     });
 
+    els.autoFitBtn.addEventListener('click', autoFitUnplacedMats);
+    els.undoAutoFitBtn.addEventListener('click', undoAutoFit);
     els.saveNowBtn.addEventListener('click', () => saveState(true));
     els.exportBtn.addEventListener('click', exportLayout);
     els.importBtn.addEventListener('click', () => els.importFile.click());
+    els.printBtn.addEventListener('click', printFloorplan);
     els.importFile.addEventListener('change', () => {
       const file = els.importFile.files?.[0];
       if (file) importLayout(file);
@@ -2013,6 +2614,7 @@
     });
     resizeObserver.observe(els.canvasViewport);
 
+    clearAutoFitUndo();
     renderRoomInputs();
     updateNotchFields();
     calculateFitScale();
